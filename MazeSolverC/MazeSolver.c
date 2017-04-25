@@ -108,7 +108,7 @@ algo() {
 			while (totalIndex <= 3) {
 				char d = directions[currentIndex];
 				struct coord mazeTile = scan(d, robotX, robotY);
-
+				printf("Checking direction: %c\n", d);
 				if (mazeTile.x == -1 || mazeTile.y == -1) {
 					//The tile is null (INDEX)
 					printf("The tile is null\n");
@@ -137,7 +137,7 @@ algo() {
 							wasAlreadyOnCheck = maze[mazeTileTwo.x][mazeTileTwo.y].wasAlreadyOn;
 						}
 
-						if ((!maze[mazeTile.x][mazeTile.y].wasAlreadyOn && !wasAlreadyOnCheck) || (mazeTileTwo.x == mazeSizeX && mazeTileTwo.y == mazeSizeY)) {
+						if ((!maze[mazeTile.x][mazeTile.y].wasAlreadyOn && !wasAlreadyOnCheck) || (mazeTileTwo.x == mazeSizeX -1 && mazeTileTwo.y == mazeSizeY - 1)) {
 							printf("High priority\n");
 							isOpen = true;
 							amountOpenNotBeenOn++;
@@ -192,12 +192,55 @@ algo() {
 				else if (foundDown == 1) robotD = 'D';
 				else {
 					//Todo: Last edge case (where robot is stuck)
+					printf("Amount not open == 0, none are open (Stuck).\n");
+
+					char lowestChar = oppositeDirection(robotD);
+					int lowestVal = -1;
+
+					currentIndex = directionToIndex(robotD);
+					totalIndex = 0;
+
+					while (totalIndex <= 3) {
+						char d = directions[currentIndex];
+						struct coord mazeTile = scan(d, robotX, robotY);
+						printf("Checking direction: %c\n", d);
+
+						if (mazeTile.x == -1 || mazeTile.y == -1) {
+							//The tile is null (INDEX)
+							printf("The tile is null\n");
+						}
+						else {
+							if (!maze[mazeTile.x][mazeTile.y].type) {
+								printf("Direction: %c is OPEN, amount of times here = %d", d, maze[mazeTile.x][mazeTile.y].timesTraveled);
+								if (lowestVal == -1) {
+									lowestVal = maze[mazeTile.x][mazeTile.y].timesTraveled;
+									lowestChar = d;
+								}
+								else if (maze[mazeTile.x][mazeTile.y].timesTraveled <= lowestVal) {
+									lowestVal = maze[mazeTile.x][mazeTile.y].timesTraveled;
+									lowestChar = d;
+								}
+							}
+						}
+
+
+						currentIndex += 1;
+						if (currentIndex >= 3) {
+							currentIndex = 0;
+						}
+						totalIndex++;
+					}
+
+					printf("The Lowest Char was: %c The lowest val: %d", lowestChar, lowestVal);
+					robotD = lowestChar;
+
 				}
 
 			}
 
 			maze[robotX][robotY].wasAlreadyOn = true;
 			move();
+			isRunning = false;
 		}
 		else {
 			//Move Straight 
@@ -356,12 +399,8 @@ void move() {
 
 		robotY += 2;
 	}
-	//robot.move(robot.direction);
-	//Todo
-	//struct coord mazeTile = { robotX, robotY };
-	//maze[mazeTile.x][mazeTile.y].wasAlreadyOn = true;
-	//isRunning = false;
-	//robot.move(robot.direction);
+	//Todo: call this
+	//doTurn(hwRobotD, d);
 }
 //{'R', 'D', 'L', 'U'};
 int directionToIndex(char d) {
