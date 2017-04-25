@@ -87,6 +87,7 @@ algo() {
 		getchar();
 		//struct coord robotTile = maze[robotX][robotY];
 		struct coord robotCoord = { robotX, robotY };
+		
 		if (maze[robotCoord.x][robotCoord.y].wasAlreadyOn) {
 			printf("Was already on\n");
 			int amountOpenNotBeenOn = 0;
@@ -110,11 +111,58 @@ algo() {
 
 				if (mazeTile.x == -1 || mazeTile.y == -1) {
 					//The tile is null (INDEX)
+					printf("The tile is null\n");
 				}
 				else {
 					if (!maze[mazeTile.x][mazeTile.y].isFlagged) {
 						//Do the HW Scan and see if it is open or closed
 						updateTile(mazeTile, robotD);
+					}
+
+					if (checkTile(maze[mazeTile.x][mazeTile.y], d)) {
+						printf("Cannot move to the tile; dead branch\n");
+					}
+					else if (maze[mazeTile.x][mazeTile.y].type) {
+						printf("Cannot move to the tile; barrier\n");
+					}
+					else {
+						//Open
+						robotD = d;
+						bool isOpen = false;
+						printf("Can move here, Checking priority of this direction\n");
+						bool wasAlreadyOnCheck = false;
+						struct coord mazeTileTwo = scan(d, mazeTile.x, mazeTile.y);
+						//null check
+						if (mazeTile.x != -1 && mazeTile.y != -1) {
+							wasAlreadyOnCheck = maze[mazeTileTwo.x][mazeTileTwo.y].wasAlreadyOn;
+						}
+
+						if ((!maze[mazeTile.x][mazeTile.y].wasAlreadyOn && !wasAlreadyOnCheck) || (mazeTileTwo.x == mazeSizeX && mazeTileTwo.y == mazeSizeY)) {
+							printf("High priority\n");
+							isOpen = true;
+							amountOpenNotBeenOn++;
+						}
+						else {
+							printf("Low priority\n");
+						}
+
+						if (d == 'U') {
+							if (isOpen) foundUp = 2;
+							else foundUp = 1;
+						}
+						else if (d == 'D') {
+							if (isOpen) foundDown = 2;
+							else foundDown = 1;
+						}
+						else if (d == 'R') {
+							if (isOpen) foundRight = 2;
+							else foundRight = 1;
+						}
+						else if (d == 'L') {
+							if (isOpen) foundLeft = 2;
+							else foundLeft = 1;
+						}
+
 					}
 
 
@@ -128,6 +176,28 @@ algo() {
 				totalIndex++;
 			}
 
+			if (amountOpenNotBeenOn > 0) {
+				if (foundRight == 2) robotD = 'R';
+				else if (foundLeft == 2) robotD = 'L';
+				else if (foundUp == 2) robotD = 'U';
+				else if (foundDown == 2) robotD = 'D';
+				else {
+					printf("Critical error: Amount not open > 0, but none are open.");
+				}
+			}
+			else {
+				if (foundRight == 1) robotD = 'R';
+				else if (foundLeft == 1) robotD = 'L';
+				else if (foundUp == 1) robotD = 'U';
+				else if (foundDown == 1) robotD = 'D';
+				else {
+					//Todo: Last edge case (where robot is stuck)
+				}
+
+			}
+
+			maze[robotX][robotY].wasAlreadyOn = true;
+			move();
 		}
 		else {
 			//Move Straight 
@@ -149,7 +219,7 @@ algo() {
 					//Do the HW Scan and see if it is open or closed
 					updateTile(nextTile, robotD);
 				}
-				if (maze[nextTile.x][nextTile.y].type == 'B') {
+				if (maze[nextTile.x][nextTile.y].type) {
 					printf("The tile is blocked\n");
 					//Cannot move straight, path is blocked
 					robotD = oppositeDirection(robotD);
@@ -174,9 +244,10 @@ algo() {
 
 			}
 		}
-
-		if (robotX == mazeSizeX && robotY == mazeSizeY) {
+		//printf("ROBOTX: %d , ROBOTY: %d, mazeSizeX: %d, mazeSizeY: %d", robotX, robotY, mazeSizeX, mazeSizeY);
+		if (robotX == mazeSizeX - 1 && robotY == mazeSizeY - 1) {
 			//TODO: End Maze...
+			printf("SOLVED\n");
 		}
 
 	}
@@ -230,6 +301,7 @@ void updateTile(struct coord mazeTile, char d) {
 	else {
 		maze[mazeTile.x][mazeTile.y].type = false;
 	}
+	maze[mazeTile.x][mazeTile.y].isFlagged = true;
 	//maze[mazeTile.x][mazeTile.y] = mazeTile;
 }
 
@@ -238,11 +310,11 @@ bool hwScan(char d) {
 	//doTurn(hwRobotD, d);
 	//Todo: Call ryans method here.
 	//return isBlocked();
-	//printf("The tile is blocked: Y for true\n");
-	//char isBlocked = getchar();
-	//if (isBlocked == 'Y') {
-	//	return true;
-	//}
+	printf("The tile is blocked: Y for true\n");
+	char isBlocked = getchar();
+	if (isBlocked == 'Y') {
+		return true;
+	}
 	return false;
 }
 
